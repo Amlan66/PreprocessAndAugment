@@ -7,6 +7,8 @@ from text_processing import preprocessing as text_preprocessing
 from text_processing import augmentation as text_augmentation
 from image_processing import preprocessing as image_preprocessing
 from image_processing import augmentation as image_augmentation
+from audio_processing import preprocessing as audio_preprocessing
+from audio_processing import augmentation as audio_augmentation
 import io
 import imghdr
 import base64
@@ -24,22 +26,28 @@ stored_data = {
 }
 
 def is_image(file_contents):
-    """Check if the file is an image by looking at its contents."""
+    """Check if the file is an image."""
     image_type = imghdr.what(None, file_contents)
     return image_type in ['jpeg', 'jpg']
+
+def is_audio(filename):
+    """Check if the file is an audio file."""
+    return filename.lower().endswith('.mp3')
 
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
     contents = await file.read()
     
-    # Determine file type
     if file.filename.endswith('.txt'):
         stored_data["file_type"] = "text"
         stored_data["original_content"] = contents.decode()
     elif is_image(contents):
         stored_data["file_type"] = "image"
-        # Convert image to base64 for display
         stored_data["original_content"] = f'data:image/jpeg;base64,{base64.b64encode(contents).decode()}'
+    elif is_audio(file.filename):
+        stored_data["file_type"] = "audio"
+        audio_b64 = base64.b64encode(contents).decode()
+        stored_data["original_content"] = f'data:audio/mp3;base64,{audio_b64}'
     else:
         return {"error": "Unsupported file type"}
     
@@ -55,7 +63,7 @@ async def upload_file(file: UploadFile = File(...)):
 async def process_content(
     content_type: str = Form(...),
     method: str = Form(...),
-    processing_type: str = Form(...)  # 'preprocess' or 'augment'
+    processing_type: str = Form(...)
 ):
     if content_type == "text":
         if processing_type == "preprocess":
@@ -71,7 +79,7 @@ async def process_content(
                 method == "synonymReplace",
                 method == "randomInsert"
             )
-    else:  # image
+    elif content_type == "image":
         # Extract the base64 image data
         content_bytes = base64.b64decode(stored_data["original_content"].split(',')[1])
         
@@ -83,6 +91,12 @@ async def process_content(
             result = image_preprocessing.preprocess_image(content_bytes, method, params)
         else:  # augment
             result = image_augmentation.augment_image(content_bytes, method)
+    elif content_type == "audio":
+        content_bytes = base64.b64decode(stored_data["original_content"].split(',')[1])
+        if processing_type == "preprocess":
+            result = audio_preprocessing.preprocess_audio(content_bytes, method)
+        else:  # augment
+            result = audio_augmentation.augment_audio(content_bytes, method)
     
     if processing_type == "preprocess":
         stored_data["processed_content"] = result

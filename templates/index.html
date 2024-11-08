@@ -11,7 +11,7 @@
         <!-- File Upload Section -->
         <div class="section">
             <h2>Upload File</h2>
-            <input type="file" id="fileInput" accept=".txt,.jpg,.jpeg">
+            <input type="file" id="fileInput" accept=".txt,.jpg,.jpeg,.mp3">
             <button onclick="uploadFile()">Upload</button>
         </div>
 
@@ -19,7 +19,7 @@
         <div class="section">
             <h2>Original Content</h2>
             <div id="originalContent" class="content-box">
-                <!-- Will contain text or image based on file type -->
+                <!-- Will contain text, image, or audio player based on file type -->
             </div>
         </div>
 
@@ -43,6 +43,11 @@
                                 <option value="resize">Resize Image</option>
                                 <option value="normalize">Normalize Image</option>
                             </optgroup>
+                            <!-- Audio options -->
+                            <optgroup label="Audio Options" id="audioPreprocessOpts">
+                                <option value="resample">Resample Audio</option>
+                                <option value="mfcc">Extract MFCC Features</option>
+                            </optgroup>
                         </select>
                     </div>
                 </div>
@@ -62,6 +67,12 @@
                                 <option value="rotation">Random Rotation</option>
                                 <option value="noise">Add Noise</option>
                             </optgroup>
+                            <!-- Audio options -->
+                            <optgroup label="Audio Options" id="audioAugmentOpts">
+                                <option value="time_stretch">Time Stretching</option>
+                                <option value="pitch_shift">Pitch Shifting</option>
+                                <option value="add_noise">Add Background Noise</option>
+                            </optgroup>
                         </select>
                     </div>
                 </div>
@@ -75,13 +86,13 @@
             <div class="result-box">
                 <h3>Preprocessed Content</h3>
                 <div id="processedContent" class="content-box">
-                    <!-- Will contain processed text or image -->
+                    <!-- Will contain processed content -->
                 </div>
             </div>
             <div class="result-box">
                 <h3>Augmented Content</h3>
                 <div id="augmentedContent" class="content-box">
-                    <!-- Will contain augmented text or image -->
+                    <!-- Will contain augmented content -->
                 </div>
             </div>
         </div>
@@ -93,19 +104,46 @@
         function updateOptionsVisibility() {
             const textPreprocessOpts = document.getElementById('textPreprocessOpts');
             const imagePreprocessOpts = document.getElementById('imagePreprocessOpts');
+            const audioPreprocessOpts = document.getElementById('audioPreprocessOpts');
             const textAugmentOpts = document.getElementById('textAugmentOpts');
             const imageAugmentOpts = document.getElementById('imageAugmentOpts');
+            const audioAugmentOpts = document.getElementById('audioAugmentOpts');
 
+            // Hide all options first
+            [textPreprocessOpts, imagePreprocessOpts, audioPreprocessOpts,
+             textAugmentOpts, imageAugmentOpts, audioAugmentOpts].forEach(el => {
+                if (el) el.style.display = 'none';
+            });
+
+            // Show relevant options based on file type
             if (currentFileType === 'text') {
                 textPreprocessOpts.style.display = '';
                 textAugmentOpts.style.display = '';
-                imagePreprocessOpts.style.display = 'none';
-                imageAugmentOpts.style.display = 'none';
             } else if (currentFileType === 'image') {
-                textPreprocessOpts.style.display = 'none';
-                textAugmentOpts.style.display = 'none';
                 imagePreprocessOpts.style.display = '';
                 imageAugmentOpts.style.display = '';
+            } else if (currentFileType === 'audio') {
+                audioPreprocessOpts.style.display = '';
+                audioAugmentOpts.style.display = '';
+            }
+        }
+
+        function displayContent(element, content, fileType) {
+            if (fileType === 'text') {
+                // Check if content contains HTML tags (for tokenization)
+                if (content.includes('<span')) {
+                    element.innerHTML = content;  // For tokenized text with colors
+                } else {
+                    element.textContent = content;  // For plain text
+                }
+            } else if (fileType === 'image') {
+                element.innerHTML = `<img src="${content}" alt="Processed image">`;
+            } else if (fileType === 'audio') {
+                element.innerHTML = `
+                    <audio controls>
+                        <source src="${content}" type="audio/wav">
+                        Your browser does not support the audio element.
+                    </audio>`;
             }
         }
 
@@ -135,12 +173,9 @@
                 currentFileType = data.file_type;
                 updateOptionsVisibility();
 
-                const contentDiv = document.getElementById('originalContent');
-                if (currentFileType === 'text') {
-                    contentDiv.textContent = data.content;
-                } else {
-                    contentDiv.innerHTML = `<img src="${data.content}" alt="Uploaded image">`;
-                }
+                // Display original content
+                displayContent(document.getElementById('originalContent'), 
+                             data.content, currentFileType);
 
                 // Clear previous results
                 document.getElementById('processedContent').innerHTML = '';
@@ -161,7 +196,6 @@
                 const preprocessMethod = document.getElementById('preprocessingMethod').value;
                 const augmentMethod = document.getElementById('augmentationMethod').value;
 
-                // Process preprocessing and augmentation in parallel
                 await Promise.all([
                     handleProcessing('preprocess', preprocessMethod),
                     handleProcessing('augment', augmentMethod)
@@ -191,11 +225,7 @@
                 processingType === 'preprocess' ? 'processedContent' : 'augmentedContent'
             );
 
-            if (currentFileType === 'text') {
-                resultDiv.innerHTML = data.result;
-            } else {
-                resultDiv.innerHTML = `<img src="${data.result}" alt="${processingType} image">`;
-            }
+            displayContent(resultDiv, data.result, currentFileType);
         }
     </script>
 </body>
