@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Text Processing App</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Text Processing App</h1>
+        
+        <!-- File Upload Section -->
+        <div class="section">
+            <h2>Upload Text File</h2>
+            <input type="file" id="fileInput" accept=".txt">
+            <button onclick="uploadFile()">Upload</button>
+        </div>
+
+        <!-- Original Text Display -->
+        <div class="section">
+            <h2>Original Text</h2>
+            <div class="text-box" id="originalText">{{ original_text }}</div>
+        </div>
+
+        <!-- Processing Options -->
+        <div class="section">
+            <h2>Processing Options</h2>
+            <div class="options-container">
+                <div class="options">
+                    <h3>Preprocessing Options:</h3>
+                    <label><input type="checkbox" id="tokenize"> Tokenize</label>
+                    <label><input type="checkbox" id="removePunct"> Remove Punctuation</label>
+                    <label><input type="checkbox" id="addPadding"> Add Padding</label>
+                </div>
+                <div class="options">
+                    <h3>Augmentation Options:</h3>
+                    <label><input type="checkbox" id="synonymReplace"> Synonym Replacement</label>
+                    <label><input type="checkbox" id="randomInsert"> Random Word Insertion</label>
+                </div>
+            </div>
+            <button onclick="processText()" class="process-btn">Process Text</button>
+        </div>
+
+        <!-- Results Section -->
+        <div class="section results">
+            <h2>Results</h2>
+            <div class="result-box">
+                <h3>Preprocessed Text</h3>
+                <div class="text-box" id="processedText">{{ processed_text | safe }}</div>
+            </div>
+            <div class="result-box">
+                <h3>Augmented Text</h3>
+                <div class="text-box" id="augmentedText">{{ augmented_text | safe }}</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function uploadFile() {
+            try {
+                const fileInput = document.getElementById('fileInput');
+                const file = fileInput.files[0];
+                if (!file) {
+                    alert('Please select a file first');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                document.getElementById('originalText').textContent = data.text;
+                // Clear previous results when new file is uploaded
+                document.getElementById('processedText').innerHTML = '';
+                document.getElementById('augmentedText').innerHTML = '';
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                alert('Error uploading file');
+            }
+        }
+
+        async function processText() {
+            try {
+                const text = document.getElementById('originalText').textContent;
+                if (!text) {
+                    alert('Please upload a text file first');
+                    return;
+                }
+
+                // Process both preprocessing and augmentation in parallel
+                await Promise.all([
+                    handlePreprocessing(text),
+                    handleAugmentation(text)
+                ]);
+
+            } catch (error) {
+                console.error('Error processing text:', error);
+                alert('Error processing text');
+            }
+        }
+
+        async function handlePreprocessing(text) {
+            const formData = new FormData();
+            formData.append('text', text);
+            formData.append('tokenize', document.getElementById('tokenize').checked);
+            formData.append('remove_punct', document.getElementById('removePunct').checked);
+            formData.append('add_padding', document.getElementById('addPadding').checked);
+
+            const response = await fetch('/preprocess', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            document.getElementById('processedText').innerHTML = data.processed_text;
+        }
+
+        async function handleAugmentation(text) {
+            const formData = new FormData();
+            formData.append('text', text);
+            formData.append('synonym_replace', document.getElementById('synonymReplace').checked);
+            formData.append('random_insert', document.getElementById('randomInsert').checked);
+
+            const response = await fetch('/augment', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            document.getElementById('augmentedText').innerHTML = data.augmented_text;
+        }
+    </script>
+
+    <style>
+        .options-container {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 20px;
+        }
+
+        .options {
+            flex: 1;
+        }
+
+        .options label {
+            display: block;
+            margin: 10px 0;
+        }
+
+        .process-btn {
+            font-size: 1.1em;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+
+        .process-btn:hover {
+            background-color: #45a049;
+        }
+
+        .results {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .result-box {
+            flex: 1;
+        }
+
+        .text-box {
+            width: 100%;
+            min-height: 100px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        h3 {
+            margin: 10px 0;
+            color: #333;
+        }
+    </style>
+</body>
+</html> 
