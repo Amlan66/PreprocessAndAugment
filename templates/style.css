@@ -1,31 +1,110 @@
+/* Container and Section Styles */
 .container {
-    max-width: 800px;
+    max-width: 1000px;
     margin: 0 auto;
     padding: 20px;
 }
 
 .section {
-    margin-bottom: 30px;
+    background-color: white;
     padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+/* Options Layout */
+.options-container {
+    display: flex;
+    gap: 40px;
+    margin-bottom: 20px;
+}
+
+.options {
+    flex: 1;
+}
+
+/* Select Dropdown Styles */
+.select-wrapper {
+    margin: 15px 0;
+}
+
+select {
+    width: 100%;
+    padding: 12px;
     border: 1px solid #ddd;
-    border-radius: 5px;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+select:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 5px rgba(74, 175, 80, 0.2);
+}
+
+/* Button Styles */
+.process-btn {
+    font-size: 1.1em;
+    padding: 12px 24px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 20px 0;
+    width: 100%;
+    transition: background-color 0.3s ease;
+}
+
+.process-btn:hover {
+    background-color: #45a049;
+}
+
+/* Results Section */
+.results {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.result-box {
+    flex: 1;
 }
 
 .text-box {
     width: 100%;
     min-height: 100px;
     border: 1px solid #ccc;
-    padding: 10px;
+    padding: 15px;
     margin: 10px 0;
     white-space: pre-wrap;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.5;
 }
 
-.options {
-    margin: 10px 0;
+/* Typography */
+h1, h2, h3 {
+    color: #333;
+    margin-bottom: 15px;
 }
 
-.options label {
-    margin-right: 20px;
+h1 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+/* File Input Styles */
+input[type="file"] {
+    padding: 8px;
+    margin-right: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: calc(100% - 120px);
 }
 
 button {
@@ -35,6 +114,7 @@ button {
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 button:hover {

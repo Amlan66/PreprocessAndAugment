@@ -26,15 +26,25 @@
             <h2>Processing Options</h2>
             <div class="options-container">
                 <div class="options">
-                    <h3>Preprocessing Options:</h3>
-                    <label><input type="checkbox" id="tokenize"> Tokenize</label>
-                    <label><input type="checkbox" id="removePunct"> Remove Punctuation</label>
-                    <label><input type="checkbox" id="addPadding"> Add Padding</label>
+                    <h3>Select Preprocessing Method:</h3>
+                    <div class="select-wrapper">
+                        <select id="preprocessingMethod">
+                            <option value="none">No Preprocessing</option>
+                            <option value="tokenize">Tokenization</option>
+                            <option value="removePunct">Remove Punctuation</option>
+                            <option value="addPadding">Add Padding</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="options">
-                    <h3>Augmentation Options:</h3>
-                    <label><input type="checkbox" id="synonymReplace"> Synonym Replacement</label>
-                    <label><input type="checkbox" id="randomInsert"> Random Word Insertion</label>
+                    <h3>Select Augmentation Method:</h3>
+                    <div class="select-wrapper">
+                        <select id="augmentationMethod">
+                            <option value="none">No Augmentation</option>
+                            <option value="synonymReplace">Synonym Replacement</option>
+                            <option value="randomInsert">Random Word Insertion</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <button onclick="processText()" class="process-btn">Process Text</button>
@@ -73,7 +83,6 @@
                 });
                 const data = await response.json();
                 document.getElementById('originalText').textContent = data.text;
-                // Clear previous results when new file is uploaded
                 document.getElementById('processedText').innerHTML = '';
                 document.getElementById('augmentedText').innerHTML = '';
             } catch (error) {
@@ -90,7 +99,6 @@
                     return;
                 }
 
-                // Process both preprocessing and augmentation in parallel
                 await Promise.all([
                     handlePreprocessing(text),
                     handleAugmentation(text)
@@ -103,11 +111,12 @@
         }
 
         async function handlePreprocessing(text) {
+            const preprocessMethod = document.getElementById('preprocessingMethod').value;
             const formData = new FormData();
             formData.append('text', text);
-            formData.append('tokenize', document.getElementById('tokenize').checked);
-            formData.append('remove_punct', document.getElementById('removePunct').checked);
-            formData.append('add_padding', document.getElementById('addPadding').checked);
+            formData.append('tokenize', preprocessMethod === 'tokenize');
+            formData.append('remove_punct', preprocessMethod === 'removePunct');
+            formData.append('add_padding', preprocessMethod === 'addPadding');
 
             const response = await fetch('/preprocess', {
                 method: 'POST',
@@ -118,10 +127,11 @@
         }
 
         async function handleAugmentation(text) {
+            const augmentMethod = document.getElementById('augmentationMethod').value;
             const formData = new FormData();
             formData.append('text', text);
-            formData.append('synonym_replace', document.getElementById('synonymReplace').checked);
-            formData.append('random_insert', document.getElementById('randomInsert').checked);
+            formData.append('synonym_replace', augmentMethod === 'synonymReplace');
+            formData.append('random_insert', augmentMethod === 'randomInsert');
 
             const response = await fetch('/augment', {
                 method: 'POST',
@@ -131,63 +141,5 @@
             document.getElementById('augmentedText').innerHTML = data.augmented_text;
         }
     </script>
-
-    <style>
-        .options-container {
-            display: flex;
-            gap: 40px;
-            margin-bottom: 20px;
-        }
-
-        .options {
-            flex: 1;
-        }
-
-        .options label {
-            display: block;
-            margin: 10px 0;
-        }
-
-        .process-btn {
-            font-size: 1.1em;
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin: 20px 0;
-        }
-
-        .process-btn:hover {
-            background-color: #45a049;
-        }
-
-        .results {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .result-box {
-            flex: 1;
-        }
-
-        .text-box {
-            width: 100%;
-            min-height: 100px;
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin: 10px 0;
-            white-space: pre-wrap;
-            background-color: #f9f9f9;
-            border-radius: 4px;
-        }
-
-        h3 {
-            margin: 10px 0;
-            color: #333;
-        }
-    </style>
 </body>
 </html> 
