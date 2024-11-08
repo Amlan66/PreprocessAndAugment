@@ -1,0 +1,4 @@
+Hi this is a sample text file, created for testing the text processing API. This web application can be used to preprocess and augment text data for various tasks such as natural language processing, machine learning, and artificial intelligence.
+For making this happen, I have used FastAPI, a modern, fast (high-performance), web framework for building APIs with Python 3.10.
+What I have learned from this project is how to build a web API using FastAPI and how to use NLTK for text preprocessing and augmentation.
+I am planning to add more features to this API in the future such as Named Entity Recognition, Sentiment Analysis, and Chatbot.

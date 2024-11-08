@@ -1,24 +1,26 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Text Processing App</title>
+    <title>File Processing App</title>
     <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
 </head>
 <body>
     <div class="container">
-        <h1>Text Processing App</h1>
+        <h1>File Processing App</h1>
         
         <!-- File Upload Section -->
         <div class="section">
-            <h2>Upload Text File</h2>
-            <input type="file" id="fileInput" accept=".txt">
+            <h2>Upload File</h2>
+            <input type="file" id="fileInput" accept=".txt,.jpg,.jpeg">
             <button onclick="uploadFile()">Upload</button>
         </div>
 
-        <!-- Original Text Display -->
+        <!-- Original Content Display -->
         <div class="section">
-            <h2>Original Text</h2>
-            <div class="text-box" id="originalText">{{ original_text }}</div>
+            <h2>Original Content</h2>
+            <div id="originalContent" class="content-box">
+                <!-- Will contain text or image based on file type -->
+            </div>
         </div>
 
         <!-- Processing Options -->
@@ -30,9 +32,17 @@
                     <div class="select-wrapper">
                         <select id="preprocessingMethod">
                             <option value="none">No Preprocessing</option>
-                            <option value="tokenize">Tokenization</option>
-                            <option value="removePunct">Remove Punctuation</option>
-                            <option value="addPadding">Add Padding</option>
+                            <!-- Text options -->
+                            <optgroup label="Text Options" id="textPreprocessOpts">
+                                <option value="tokenize">Tokenization</option>
+                                <option value="removePunct">Remove Punctuation</option>
+                                <option value="addPadding">Add Padding</option>
+                            </optgroup>
+                            <!-- Image options -->
+                            <optgroup label="Image Options" id="imagePreprocessOpts">
+                                <option value="resize">Resize Image</option>
+                                <option value="normalize">Normalize Image</option>
+                            </optgroup>
                         </select>
                     </div>
                 </div>
@@ -41,30 +51,64 @@
                     <div class="select-wrapper">
                         <select id="augmentationMethod">
                             <option value="none">No Augmentation</option>
-                            <option value="synonymReplace">Synonym Replacement</option>
-                            <option value="randomInsert">Random Word Insertion</option>
+                            <!-- Text options -->
+                            <optgroup label="Text Options" id="textAugmentOpts">
+                                <option value="synonymReplace">Synonym Replacement</option>
+                                <option value="randomInsert">Random Word Insertion</option>
+                            </optgroup>
+                            <!-- Image options -->
+                            <optgroup label="Image Options" id="imageAugmentOpts">
+                                <option value="horizontal_flip">Horizontal Flip</option>
+                                <option value="rotation">Random Rotation</option>
+                                <option value="noise">Add Noise</option>
+                            </optgroup>
                         </select>
                     </div>
                 </div>
             </div>
-            <button onclick="processText()" class="process-btn">Process Text</button>
+            <button onclick="processContent()" class="process-btn">Process Content</button>
         </div>
 
         <!-- Results Section -->
         <div class="section results">
             <h2>Results</h2>
             <div class="result-box">
-                <h3>Preprocessed Text</h3>
-                <div class="text-box" id="processedText">{{ processed_text | safe }}</div>
+                <h3>Preprocessed Content</h3>
+                <div id="processedContent" class="content-box">
+                    <!-- Will contain processed text or image -->
+                </div>
             </div>
             <div class="result-box">
-                <h3>Augmented Text</h3>
-                <div class="text-box" id="augmentedText">{{ augmented_text | safe }}</div>
+                <h3>Augmented Content</h3>
+                <div id="augmentedContent" class="content-box">
+                    <!-- Will contain augmented text or image -->
+                </div>
             </div>
         </div>
     </div>
 
     <script>
+        let currentFileType = '';
+
+        function updateOptionsVisibility() {
+            const textPreprocessOpts = document.getElementById('textPreprocessOpts');
+            const imagePreprocessOpts = document.getElementById('imagePreprocessOpts');
+            const textAugmentOpts = document.getElementById('textAugmentOpts');
+            const imageAugmentOpts = document.getElementById('imageAugmentOpts');
+
+            if (currentFileType === 'text') {
+                textPreprocessOpts.style.display = '';
+                textAugmentOpts.style.display = '';
+                imagePreprocessOpts.style.display = 'none';
+                imageAugmentOpts.style.display = 'none';
+            } else if (currentFileType === 'image') {
+                textPreprocessOpts.style.display = 'none';
+                textAugmentOpts.style.display = 'none';
+                imagePreprocessOpts.style.display = '';
+                imageAugmentOpts.style.display = '';
+            }
+        }
+
         async function uploadFile() {
             try {
                 const fileInput = document.getElementById('fileInput');
@@ -82,63 +126,76 @@
                     body: formData
                 });
                 const data = await response.json();
-                document.getElementById('originalText').textContent = data.text;
-                document.getElementById('processedText').innerHTML = '';
-                document.getElementById('augmentedText').innerHTML = '';
+
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                currentFileType = data.file_type;
+                updateOptionsVisibility();
+
+                const contentDiv = document.getElementById('originalContent');
+                if (currentFileType === 'text') {
+                    contentDiv.textContent = data.content;
+                } else {
+                    contentDiv.innerHTML = `<img src="${data.content}" alt="Uploaded image">`;
+                }
+
+                // Clear previous results
+                document.getElementById('processedContent').innerHTML = '';
+                document.getElementById('augmentedContent').innerHTML = '';
             } catch (error) {
                 console.error('Error uploading file:', error);
                 alert('Error uploading file');
             }
         }
 
-        async function processText() {
+        async function processContent() {
             try {
-                const text = document.getElementById('originalText').textContent;
-                if (!text) {
-                    alert('Please upload a text file first');
+                if (!currentFileType) {
+                    alert('Please upload a file first');
                     return;
                 }
 
+                const preprocessMethod = document.getElementById('preprocessingMethod').value;
+                const augmentMethod = document.getElementById('augmentationMethod').value;
+
+                // Process preprocessing and augmentation in parallel
                 await Promise.all([
-                    handlePreprocessing(text),
-                    handleAugmentation(text)
+                    handleProcessing('preprocess', preprocessMethod),
+                    handleProcessing('augment', augmentMethod)
                 ]);
 
             } catch (error) {
-                console.error('Error processing text:', error);
-                alert('Error processing text');
+                console.error('Error processing content:', error);
+                alert('Error processing content');
             }
         }
 
-        async function handlePreprocessing(text) {
-            const preprocessMethod = document.getElementById('preprocessingMethod').value;
-            const formData = new FormData();
-            formData.append('text', text);
-            formData.append('tokenize', preprocessMethod === 'tokenize');
-            formData.append('remove_punct', preprocessMethod === 'removePunct');
-            formData.append('add_padding', preprocessMethod === 'addPadding');
+        async function handleProcessing(processingType, method) {
+            if (method === 'none') return;
 
-            const response = await fetch('/preprocess', {
+            const formData = new FormData();
+            formData.append('content_type', currentFileType);
+            formData.append('method', method);
+            formData.append('processing_type', processingType);
+
+            const response = await fetch('/process', {
                 method: 'POST',
                 body: formData
             });
             const data = await response.json();
-            document.getElementById('processedText').innerHTML = data.processed_text;
-        }
 
-        async function handleAugmentation(text) {
-            const augmentMethod = document.getElementById('augmentationMethod').value;
-            const formData = new FormData();
-            formData.append('text', text);
-            formData.append('synonym_replace', augmentMethod === 'synonymReplace');
-            formData.append('random_insert', augmentMethod === 'randomInsert');
+            const resultDiv = document.getElementById(
+                processingType === 'preprocess' ? 'processedContent' : 'augmentedContent'
+            );
 
-            const response = await fetch('/augment', {
-                method: 'POST',
-                body: formData
-            });
-            const data = await response.json();
-            document.getElementById('augmentedText').innerHTML = data.augmented_text;
+            if (currentFileType === 'text') {
+                resultDiv.innerHTML = data.result;
+            } else {
+                resultDiv.innerHTML = `<img src="${data.result}" alt="${processingType} image">`;
+            }
         }
     </script>
 </body>
