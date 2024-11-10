@@ -1,6 +1,5 @@
 from fastapi import FastAPI, Request, UploadFile, File, Form
 from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 import uvicorn
 from text_processing import preprocessing as text_preprocessing
@@ -15,8 +14,8 @@ import base64
 
 app = FastAPI()
 
+# Set up templates
 templates = Jinja2Templates(directory="templates")
-app.mount("/static", StaticFiles(directory="templates"), name="static")
 
 stored_data = {
     "original_content": "",
