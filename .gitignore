@@ -1,5 +1,11 @@
+# Virtual Environment
 venv/
 input/
+env/
+ENV/
+.env
+.venv
+
 # Python
 __pycache__/
 *.py[cod]
@@ -22,8 +28,9 @@ wheels/
 .installed.cfg
 *.egg
 
-# IDEs
+# IDE specific files
 .idea/
 .vscode/
 *.swp
 *.swo
+.DS_Store
